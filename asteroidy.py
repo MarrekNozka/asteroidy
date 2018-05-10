@@ -6,8 +6,10 @@
 ############################################################################
 
 import pyglet
-from pyglet.window.key import A, B, C, MOD_CTRL, MOD_SHIFT
-from pyglet.window.mouse import LEFT, RIGHT
+from pyglet.window.key import DOWN, UP, LEFT, RIGHT, MOD_CTRL, MOD_SHIFT
+from pyglet.window.mouse import LEFT as mLEFT
+from pyglet.window.mouse import RIGHT as mRIGHT
+from math import sin, cos, pi
 
 window = pyglet.window.Window()
 
@@ -17,9 +19,36 @@ obrazek.anchor_y = obrazek.height // 2
 sprite = pyglet.sprite.Sprite(obrazek)
 
 
+uhel = sprite.rotation = 60
+rychlost = 30
+klavesy = set()
+
+
 def tiktak(t):
-    sprite.x = sprite.x + 10*t
-    sprite.y = sprite.y + 10*t
+    global rychlost
+    global uhel
+
+    # posun
+    sprite.x = sprite.x + rychlost*t*sin(pi*uhel/180)
+    sprite.y = sprite.y + rychlost*t*cos(pi*uhel/180)
+
+    # natočení
+    for sym in klavesy:
+        if sym == DOWN:
+            if rychlost < 10:
+                rychlost = 0
+            else:
+                rychlost -= 10*t
+        if sym == UP:
+            if rychlost > 90:
+                rychlost = 100
+            rychlost += 10
+        if sym == LEFT:
+            uhel -= 10
+            sprite.rotation -= 10
+        if sym == RIGHT:
+            uhel += 10
+            sprite.rotation += 10
 
 
 @window.event
@@ -30,24 +59,36 @@ def on_draw():
 
 @window.event
 def on_mouse_press(x, y, button, mod):
-    if button == LEFT:
+    global uhel
+    if button == mLEFT:
         sprite.x = x
         sprite.y = y
-    elif button == RIGHT and (mod & MOD_SHIFT):
+    elif button == mRIGHT and (mod & MOD_SHIFT):
         sprite.rotation += 180
-    elif button == RIGHT and (mod & MOD_CTRL):
+        uhel += 180
+    elif button == mRIGHT and (mod & MOD_CTRL):
         sprite.rotation += 90
-    elif button == RIGHT:
+        uhel += 90
+    elif button == mRIGHT:
         sprite.rotation += 10
+        uhel += 10
 
 
 @window.event
 def on_key_press(sym, mod):
-    if sym != A:
-        print(sym, mod)
+    global klavesy
+    klavesy.add(sym)
 
 
-pyglet.clock.schedule_interval(tiktak, 1/10)
+@window.event
+def on_key_release(sym, mod):
+    global klavesy
+    klavesy.remove(sym)
+
+
+
+
+pyglet.clock.schedule_interval(tiktak, 1/25)
 
 pyglet.app.run()
 print('Hotovo!')
